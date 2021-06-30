@@ -12,7 +12,7 @@ library(ComplexHeatmap)
 library(slingshot)
 library(cowplot)
 library(openxlsx)
-
+library(stringr)
 library(limma)
 library(org.Mm.eg.db)
 library(GO.db)
@@ -47,11 +47,11 @@ gg.sr.pr.dn = gg.sr.pr[mkrs[[1]][ii,]$logFC.primed > 0]
 
 saveRDS(mkrs, file="../results/np_self-vs-primed-DEG.rds")
 dat = as.data.frame(mkrs[[1]][ii,])
-dat$gene = rownames(dat)
+dat$gene = str_to_title(rownames(dat))
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=dat, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_self-vs-primed-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab3_np_self-vs-primed-DEG.xlsx')
 
 
 #- DEGs: primed vs differentiating
@@ -76,11 +76,11 @@ gg.pr.dr.dn = gg.pr.dr[mkrs[[1]][ii,]$logFC.differentiating > 0]
 
 saveRDS(mkrs, file="../results/np_primed-vs-differentiating-DEG.rds")
 dat = as.data.frame(mkrs[[1]][ii,])
-dat$gene = rownames(dat)
+dat$gene = str_to_title(rownames(dat))
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=dat, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_primed-vs-differentiating-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab4_np_primed-vs-differentiating-DEG.xlsx')
 
 
 
@@ -102,7 +102,7 @@ sce2 = sce[,ii] ; sce2$cluster_tme = droplevels(sce2$cluster_tme)
 
 dat  = data.matrix(logcounts(sce2)[gg,])
 colnames(dat) = sce2$cell
-
+rownames(dat) = str_to_title(rownames(dat))
 
 #- Scale and Saturate
 #--------------------
@@ -113,7 +113,7 @@ dd[dd>3] = 3 ; dd[dd < -3] = -3
 
 #- choose genes to annotate
 #--------------------------
-gens = c("birc5","smc4","smc2","six2","cited1","cdca3","lhx1","pax8","crym","meis2","gas1","eya1","rspo1","fxyd2","epcam")
+gens = str_to_title(c("birc5","smc4","smc2","six2","cited1","cdca3","lhx1","pax8","crym","meis2","gas1","eya1","rspo1","fxyd2","epcam"))
 ha = rowAnnotation(foo = anno_mark(at =match(gens,rownames(dat)), labels = gens))
 
 #- Column order in each cluster
@@ -129,10 +129,12 @@ right_annotation = ha, split=3, column_split =sce2$cluster_tme[ord],
 clustering_method_rows = "ward.D2",show_row_dend = FALSE,
 column_title_gp = gpar(fontsize = 12),row_title_gp = gpar(fontsize = 0))
 
-pdf(width=8,height=6,file="../figures/np_np-clusters-deg-heatmap.pdf")
+pdf(width=8,height=6,file="../figures/fig3a_np_np-clusters-deg-heatmap.pdf")
 draw(hm)
 dev.off()
 
+
+#- FIGURE 3B,C
 
 #===============
 #- GO enrichment
@@ -154,39 +156,39 @@ tgo.pr.dr = make_topgo(gg.pr.dr)
 plot_tgo <- function(tgo){
 #=========================
 
-  df = tgo
-  df <- df[, c(1, 4, 5)]
-  colnames(df) = c("TermDesc", "Count", "Pval")
-  df$TermDesc <- factor(df$TermDesc, levels = df$TermDesc)
+    df = tgo
+    df <- df[, c(1, 4, 5)]
+    colnames(df) = c("TermDesc", "Count", "Pval")
+    df$TermDesc <- factor(df$TermDesc, levels = df$TermDesc)
 
-  g <- ggplot(  data = df,
+    g <- ggplot(  data = df,
                 aes(x = TermDesc, y = -log10(Pval))) +
-                geom_bar(stat = "identity",fill=gray(1/2),width=0.75) +
-                scale_x_discrete(limits = rev(levels(df$TermDesc))) +
-                geom_text(aes(label = df$Count,
-                       y = -log10(df$Pval)+1/2),
-                       position = position_dodge(0),
-                       vjust = 0.5,size=3,color=gray(1/2)) +
-                coord_flip() +
-                theme_minimal() +
-                theme(  plot.title = element_text(hjust = 1),
-                        panel.grid.minor.y = element_blank(),
-                        panel.grid.major.y = element_blank(),
-                        legend.position = "none",
-                        text = element_text(size=14,family = 'Roboto')
-                      ) +
-                ylab("-log10(p-value)") +
-                xlab("")
+        geom_bar(stat = "identity",fill=gray(1/2),width=0.75) +
+        scale_x_discrete(limits = rev(levels(df$TermDesc))) +
+        geom_text(aes(label = df$Count,
+                      y = -log10(df$Pval)+1/2),
+                  position = position_dodge(0),
+                  vjust = 0.5,size=3,color=gray(1/2)) +
+        coord_flip() +
+        theme_minimal() +
+        theme(  plot.title = element_text(hjust = 1),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.major.y = element_blank(),
+              legend.position = "none",
+              text = element_text(size=14,family = 'Roboto')
+              ) +
+        ylab("-log10(p-value)") +
+        xlab("")
     return(g)
-  }
+}
 
 
 x11(width=8,height=1.75,type="cairo")
 plot_tgo(tgo.pr.dr[1:15,])
-dev.print(png,file="../figures/np_np-clusters-go-pr-vs-diff.png", width=8*600,height=3*600,res=600)
+dev.print(png,file="../figures/fig3c_np_np-clusters-go-pr-vs-diff.png", width=8*600,height=3*600,res=600)
 plot_tgo(tgo.sr.pr[1:15,])
-dev.print(png,file="../figures/np_np-clusters-go-sr-vs-pr.png",width=8*600,height=3*600,res=600)
-dev.off(); dev.off()
+dev.print(png,file="../figures/fig3b_np_np-clusters-go-sr-vs-pr.png",width=8*600,height=3*600,res=600)
+dev.off();
 
 #- tables
 
@@ -208,16 +210,17 @@ saveRDS(r1,file="../results/np_np-clusters-go-sr-vs-pr.rds")
 saveRDS(r2,file="../results/np_np-clusters-go-pr-vs-diff.rds")
 
 r1$Term.ID = rownames(r1)
-r2$Term.ID = rownames(r2
+r2$Term.ID = rownames(r2)
 
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "self-renew-vs-primed")
 addWorksheet(wb = wb, sheetName = "primed-vs-differentiating")
 writeData(wb=wb,x=r1, sheet="self-renew-vs-primed",rowNames=FALSE)
 writeData(wb=wb,x=r2, sheet="primed-vs-differentiating",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_np-clusters-go-combined.xlsx')
+saveWorkbook(wb,'../results/supTab5_np_np-clusters-go-combined.xlsx')
 
 
+#- FIGURE 3E
 
 #- Pseudotime plots of rspo1, birc5 and ccnd1
 #=============================================
@@ -234,16 +237,24 @@ df2$gene = "birc5"
 df3 = data.frame(expression= assay(sce,"logcounts_SAVER")["ccnd1",], cluster = sce$cluster_tme, pseudotime = sce$slingAvgTme)
 df3$gene = "ccnd1"
 df = rbind(df1,df2,df3)
+df$gene <- stringr::str_to_title(df$gene)
 
 
 pl = ggplot(df,aes(x=pseudotime,y=expression,col=cluster)) +
     geom_point(size=.7) + scale_color_manual(values = cls) +
     facet_wrap(~gene,ncol=1,scale="free_y") +
-  theme_minimal() +
-  theme( panel.background = element_blank(),
-         panel.border = element_blank(),
-         panel.grid.minor = element_blank(),
-         panel.grid.major = element_blank())+
-         guides(colour = guide_legend(override.aes = list(size=3)))
+    theme_minimal() +
+    theme( panel.background = element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank(),
+	  axis.text.y=element_blank(),
+          axis.ticks.y=element_blank(),
+	  axis.line = element_line(),
+          panel.border = element_blank()) + 
+          #panel.grid.minor = element_blank(),
+          #panel.grid.major = element_blank())+
+    guides(colour = guide_legend(override.aes = list(size=3)))
 
-         save_plot("../figures/np_pseudotime_birc5-rspo1-ccnd1.pdf",pl,base_heigh = 6, base_asp=.9)
+save_plot("../figures/fig3e_np_pseudotime_birc5-rspo1-ccnd1.pdf",pl,base_heigh = 6, base_asp=1.1)
+
+#- end

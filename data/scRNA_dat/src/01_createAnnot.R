@@ -1,6 +1,5 @@
 ############################################################
-## get gene symbols/ensg id -- generated object once and load
-## that instead
+## get gene symbols/ensg id 
 ############################################################
 library(data.table)
 library(stringi)

@@ -20,6 +20,7 @@ library("SCENIC")
 library(mgcv)
 library(stringr)
 library(foreach)
+library(stringr)
 
 #=========================
 #- SCENIC regulon analysis
@@ -101,7 +102,7 @@ sce3          = sce2[,sce2$slingAvgTme < tcut]
 sce3$cluster_tme = droplevels(sce3$cluster_tme)
 sce3          = sce3[rowSums(logcounts(sce2)>0) > floor(ncol(sce3)*.05),]
 
-#- 3. Calcluate pseudotime-associated genes (across selected cells)
+#- 3. Calculate pseudotime-associated genes (across selected cells)
 #------------------------------------------------------------------
 
 #- associated genes
@@ -153,12 +154,11 @@ addWorksheet(wb = wb, sheetName = "increasing_with_time")
 addWorksheet(wb = wb, sheetName = "decreasing_with_time")
 writeData(wb=wb,x=dat1, sheet="decreasing_with_time",rowNames=FALSE)
 writeData(wb=wb,x=dat2, sheet="increasing_with_time",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_self-renew-primed-pseudotime-upDown.xlsx')
+saveWorkbook(wb,'../results/supTab6_np_self-renew-primed-pseudotime-upDown.xlsx')
 
 
 
 #- UP  AND DOWN GO ANALYSIS
-
 
 library(GSEABase)
 gsc <- getBroadSets("../data/external/MSigDB/msigdb_v7.0.xml")
@@ -229,7 +229,7 @@ addWorksheet(wb = wb, sheetName = "increasing_with_time")
 addWorksheet(wb = wb, sheetName = "decreasing_with_time")
 writeData(wb=wb,x=res.dn, sheet="decreasing_with_time",rowNames=FALSE)
 writeData(wb=wb,x=res.up, sheet="increasing_with_time",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_self-renew-primed-pseudotime-go.xlsx')
+saveWorkbook(wb,'../results/supTab7_np_self-renew-primed-pseudotime-go.xlsx')
 
 #- PERFORM SCENIC ANALYSIS
 #=========================
@@ -248,7 +248,6 @@ runSCENIC_1_coexNetwork2modules(scenicOptions)
 runSCENIC_2_createRegulons(scenicOptions)
 runSCENIC_3_scoreCells(scenicOptions, exprMat_filtered)
 
-
 aucRegulons = readRDS("../results/tmp/SCENIC/int/3.1_regulons_forAUCell.Rds")
 aucRes = readRDS("../results/tmp/SCENIC/int/3.4_regulonAUC.Rds")
 
@@ -256,23 +255,27 @@ aucRes = readRDS("../results/tmp/SCENIC/int/3.4_regulonAUC.Rds")
 mat = assay(aucRes)
 
 TF     <-  sort(unique(gsub("_.*", "", gsub(" ", "_", rownames(mat)))))
-TF.ind <-  sapply(TF, grep, rownames(mat))
+TF.ind <- sapply(TF, function(x){
+    rx = paste0(paste0(x, "[\\s]"),"|", paste0(x, "_extended"))
+    return(grep(rx, rownames(mat)))
+})
 afu <- function(ids){
   if(length(ids)==1) return(ids)
   ii = grep("_extended",rownames(mat)[ids])
   return(ids[ii])
 }
 inds = unlist(lapply(TF.ind,afu))
- df = melt(aucRegulons[rownames(mat)][inds])
+df = melt(aucRegulons[rownames(mat)][inds])
 colnames(df) <- c("gene","module")
 
 saveRDS(df,file="../results/np_pseudotime-gene-set-modules.rds")
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=df, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_pseudotime-gene-set-modules.xlsx')
+saveWorkbook(wb,'../results/supTab8_np_pseudotime-gene-set-modules.xlsx')
 
 
+#- FIGURE 3G
 
 ca = HeatmapAnnotation( cluster=as.character(sce3$cluster_tme),
                         pseudotime=sce3$slingAvgTme,
@@ -289,6 +292,8 @@ column_labels=rep("",ncol(mat)),show_row_dend = FALSE,split=2, col=colfun,
 clustering_method_rows = "ward.D2",top_annotation=ca[order(sce3$slingAvgTme)],
 name="module score")
 
-pdf("../figures/np_pseudotime-gene-set-heatmap.pdf",height=6,width=14)
+pdf("../figures/fig3g_np_pseudotime-gene-set-heatmap.pdf",height=6,width=14)
 draw(hm)
 dev.off()
+
+#- END

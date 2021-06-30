@@ -28,7 +28,7 @@ sce$selected = sce$Cluster %in% c("nephron-progenitor",
                                   "tubular",
                                   "podocytes")
 
-sce2         = sce[, sce$selected]; dim(sce2) ## 11181 x 1272
+sce2         = sce[, sce$selected]; dim(sce2) ## 11155 x 1273
 
 #- rm very low expressed genes in this subset of cells
 #=====================================================
@@ -59,7 +59,7 @@ sce2 <- denoisePCA(sce2,
                    subset.row = rowData(sce2)$hvg)
 set.seed(1000)
 sce2 <- runTSNE(sce2,
-                use_dimred = "PCA")
+                dimred = "PCA")
 set.seed(1000)
 sce2 <- runUMAP(sce2,
                 dimred = "PCA")

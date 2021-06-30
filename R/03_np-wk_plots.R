@@ -43,7 +43,7 @@ labdat = data.frame(t(labdat))
 labdat$label = rownames(labdat)
 colnames(labdat) = c("tSNE1","tSNE2","cluster")
 
-pdf(file="../figures/wk_celltype-tsne.pdf",width=8,height=4.5)
+pdf(file="../figures/fig1b_wk_celltype-tsne.pdf",width=8,height=4.5)
 
 cls = metadata(sce)$Cluster_colors
 cls_tmp = cls[names(cls) %in% dat$cluster]
@@ -103,7 +103,7 @@ labdat = data.frame(t(labdat))
 labdat$label = rownames(labdat)
 colnames(labdat) = c("tSNE1","tSNE2","cluster")
 
-pdf(file="../figures/np_celltype-tsne.pdf",width=8,height=4.5)
+pdf(file="../figures/fig2a_np_celltype-tsne.pdf",width=8,height=4.5)
 
 cls_tmp = cls[names(cls) %in% dat$cluster]
 ggplot(dat,aes(x=tSNE1,y=tSNE2,col=cluster)) +
@@ -147,25 +147,27 @@ dev.off()
 sce = readRDS("../results/sce_fully-annotated.rds")
 cls = metadata(sce)$Cluster_colors
 gens = tolower(c("Cited1","Six2"  , #- NPs
-                 "Lhx1", "Pax8",  #- mixed / differentiating
-                 "podxl" ,"nphs1" , #- podocytes
-                 "pdzk1", "slc34a1" ,
-                 "tmem52b", "shd",
+                 "Lhx1", "Pax8",    #- mixed / differentiating
+                 "Podxl" ,"Nphs1" , #- podocytes
+                 "Pdzk1", "Slc34a1" ,
+                 "Tmem52b", "Shd",
                  "Calb1" ,"Gata3" , #- ureteric bud / collecting duct (UB/CD)
-                 "Col1a1","meis1" , #- stroma
-                 "Aldh1a2",
-                 "Dlk1", "Postn", #- cortical / nephrogenic
-                 "Cldn11",
-                 "emcn"  ,"kdr"   , #- endothelial
-                 "cd52"  ,"fcer1g"))
+                 "Col1a1","meis1" , #- stroma 
+                 "Aldh1a2", 
+                 "Dlk1", "Postn",   #- cortical / mesangial
+                 "Cldn11", 
+                 "Emcn"  ,"Kdr"   , #- endothelial
+                 "Cd52"  ,"Fcer1g"))
+
 
 df            = data.frame(t(as.matrix(logcounts(sce)[gens,])))
+colnames(df)  = str_to_title(colnames(df))
 df$cluster    = sce$cluster_it
 dfm           = reshape2::melt(df)
 colnames(dfm) = c("cluster","gene","expression")
 
 
-pdf(file="../figures/wk_celltype-violins.pdf",width=14.5,height=5)
+pdf(file="../figures/fig1c_wk_celltype-violins.pdf",width=14.5,height=5)
 cls_tmp = cls[names(cls) %in% df$cluster]
 ggplot(data=dfm, aes(x=cluster, y=expression, col=cluster, fill=cluster)) +
    geom_violin(scale="width") +
@@ -204,13 +206,14 @@ gens = tolower(c("cited1" ,  "six2"   , "pax8",
                  "tmem52b",  "shd"))
 
 df            = data.frame(t(as.matrix(logcounts(sce)[gens,])))
+colnames(df)  = str_to_title(colnames(df))
 df$cluster    = sce$cluster_tme
 dfm           = reshape2::melt(df)
 colnames(dfm) = c("cluster","gene","expression")
 
 pw = 14/22*14.5
 ph = 9/11*5
-pdf(file="../figures/np_celltype-violins.pdf",width=pw,height=ph)
+pdf(file="../figures/fig2b_np_celltype-violins.pdf",width=pw,height=ph)
 cls_tmp = cls[names(cls) %in% df$cluster]
 ggplot(data=dfm, aes(x=cluster, y=expression, col=cluster, fill=cluster)) +
    geom_violin(scale="width") +
@@ -236,7 +239,7 @@ dev.off()
 #- VIOLINS of POD  CELLTYPES
 #===========================
 #
-#- FIGURE 4A
+#- FIGURE 4B
 
 sce = readRDS("../results/sce_np_fully-annotated.rds")
 cls = metadata(sce)$Cluster_colors
@@ -247,6 +250,7 @@ gens = tolower(c("cdkn1c","gas1","wt1","robo2","sparc","fxyd6",
 
 
 df            = data.frame(t(as.matrix(logcounts(sce)[gens,])))
+colnames(df)  = str_to_title(colnames(df))
 df$cluster    = sce$cluster_tme
 dfm           = reshape2::melt(df)
 colnames(dfm) = c("cluster","gene","expression")
@@ -254,7 +258,7 @@ colnames(dfm) = c("cluster","gene","expression")
 pw = 17/22*14.5
 ph = 9/11*5
 
-pdf(file="../figures/np_podocyte-violins.pdf",width=pw,height=ph)
+pdf(file="../figures/fig4b_np_podocyte-violins.pdf",width=pw,height=ph)
 cls_tmp = cls[names(cls) %in% df$cluster]
 ggplot(data=dfm, aes(x=cluster, y=expression, col=cluster, fill=cluster)) +
   geom_violin(scale="width") +
@@ -280,7 +284,7 @@ dev.off()
 #- VIOLINS of TUB  CELLTYPES
 #===========================
 #
-#- FIGURE 4B
+#- FIGURE 4A
 
 sce = readRDS("../results/sce_np_fully-annotated.rds")
 cls = metadata(sce)$Cluster_colors
@@ -293,6 +297,7 @@ gens = tolower(c( "cldn6","cldn7" ,"ly6a",
 
 
 df            = data.frame(t(as.matrix(logcounts(sce)[gens,])))
+colnames(df)  = str_to_title(colnames(df))
 df$cluster    = sce$cluster_tme
 dfm           = reshape2::melt(df)
 colnames(dfm) = c("cluster","gene","expression")
@@ -300,7 +305,7 @@ colnames(dfm) = c("cluster","gene","expression")
 pw = 22/22*14.5
 ph = 9/11*5
 
-pdf(file="../figures/np_tubular-violins.pdf",width=pw,height=ph)
+pdf(file="../figures/fig4a_np_tubular-violins.pdf",width=pw,height=ph)
 cls_tmp = cls[names(cls) %in% df$cluster]
 ggplot(data=dfm, aes(x=cluster, y=expression, col=cluster, fill=cluster)) +
   geom_violin(scale="width") +
@@ -336,6 +341,7 @@ gens = c("six2","crym","cited1","gdnf","meis1","foxd1","crabp1","aldh1a2")
 
 #- plotting
 dat               = data.matrix(logcounts(sce)[gens,])
+rownames(dat) = str_to_title(rownames(dat))
 colnames(dat)     = sce$cell
 coldat            = sce$cluster_it
 coldat            = as.data.frame(coldat)
@@ -367,6 +373,50 @@ pheatmap(dat[,order(coldat$cluster)],
                 cellheight=10,
                 treeheight_row=0)
 
-dev.print(pdf,width=9,height=4.5,file="../figures/xl_np-stromal_heatmap.pdf")
+dev.print(pdf,width=9,height=4.5,file="../figures/fig5_xl_np-stromal_heatmap.pdf")
+
+
+
+
+
+#- "known" marker genes for lineages
+gens = c("six2","crym","cited1","gdnf", "meis1", "foxd1","crabp1","aldh1a2", "dlk1", "postn", "cldn11", "col1a1")
+
+#- plotting
+dat               = data.matrix(logcounts(sce)[gens,])
+rownames(dat)     = str_to_title(rownames(dat))
+colnames(dat)     = sce$cell
+coldat            = sce$cluster_it
+coldat            = as.data.frame(coldat)
+rownames(coldat)  = colnames(dat)
+colnames(coldat)  = "cluster"
+levels(coldat$cluster) = levels(sce$cluster_it)[levels(sce$cluster_it) %in% levels(coldat$cluster)]
+
+cls               = metadata(sce)$Cluster_colors
+cls_tmp           = cls[names(cls) %in% coldat$cluster]
+cc                = list(cluster = cls_tmp)
+cc$cluster        = cc$cluster[levels(coldat$cluster)]
+
+pal   = colorRampPalette(rev(sequential_hcl(n = 7,"Gray")))(100)
+hgaps = cumsum(table(coldat$cluster)[levels(coldat$cluster[order(coldat$cluster)])])
+hgaps = hgaps[seq_len(length(hgaps)-1)]
+
+
+pheatmap(dat[,order(coldat$cluster)],
+                scale="none",
+                cluster_cols=FALSE,
+                gaps_col=hgaps,
+                color =pal,
+                clustering_method="ward.D",
+                annotation_col=coldat,
+                annotation_colors=cc,
+                cutree_row=12,
+                labels_col=rep("",ncol(dat)),
+                fontsize_row=9,
+                cellheight=10,
+                treeheight_row=0)
+
+dev.print(pdf,width=9,height=4.5,file="../figures/fig5_xl_np-stromal_heatmap_Rev.pdf")
+
 
 #- end

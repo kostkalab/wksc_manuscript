@@ -11,6 +11,7 @@ library(colorspace)
 library(ComplexHeatmap)
 library(slingshot)
 library(cowplot)
+library(stringr)
 
 #=========================
 #- WK marker genes heatmap
@@ -36,6 +37,7 @@ inds = tapply(1:ncol(sce),sce$cluster_it,sample,nce)
 inds = (unlist(inds))
 clus = sce$cluster_it[inds]
 mat  = as.matrix(logcounts(sce)[glu,inds])
+rownames(mat) = str_to_title(rownames(mat))
 
 dd     = mat - rowMeans(mat)
 dd     = dd / apply(dd,1,sd)
@@ -56,7 +58,7 @@ column_labels=rep("",ncol(dd)), cluster_rows=dend,row_split=10,
 column_split= clus,use_raster=TRUE,row_names_gp = gpar(fontsize = 8),
 show_row_dend=FALSE,row_title="",column_title_rot=90)
 
-pdf("../figures/wk_celltype-DEG-heatmap.pdf",width=6,height=16)
+pdf("../figures/supFig1_wk_celltype-DEG-heatmap.pdf",width=6,height=16)
 draw(hm)
 dev.off()
 
@@ -74,26 +76,34 @@ sce$slingNL = rowSums(!is.na(tt))
 
 sds = SlingshotDataSet(sce)
 
-sce$Cluster6 = forcats::fct_relevel(sce$Cluster6,c("self-renew","primed",
-"differentiating","i_tubular_dist","m_tubular_dist","i_tubular_prox",
-"m_tubular_prox","i_podocytes" ,"m_podocytes"))
+ll = levels(sce$cluster_tme)
+ll[ll == "i_proximal_tubular"] = "i_tubular_prox"
+ll[ll == "m_proximal_tubular"] = "m_tubular_prox"
+ll[ll == "i_distal_tubular"] = "i_tubular_dist"
+ll[ll == "m_distal_tubular"] = "m_tubular_dist"
+ll[ll == "i_podocyte"] = "i_podocytes"
+ll[ll == "m_podocyte"] = "m_podocytes"
+levels(sce$cluster_tme) = ll
+sce$cluster_tme = forcats::fct_relevel(sce$cluster_tme,
+                                       c("self-renew","primed",
+                                         "differentiating","i_tubular_dist","m_tubular_dist","i_tubular_prox",
+                                         "m_tubular_prox","i_podocytes" ,"m_podocytes"))
 
 pl = plotTSNE(sce,col="cluster_tme",shape_by='slingNL') +
-      scale_color_manual(values = cls) + scale_fill_manual(values=cls)
-
-d1 = data.frame(sds@curves[[1]]$s)
+    scale_fill_manual(values=cls)
+d1 = data.frame(slingCurves(sds)[[1]]$s[slingCurves(sds)[[1]]$ord, ])
 colnames(d1) = c("x","y")
-d2 = data.frame(sds@curves[[2]]$s)
+d2 = data.frame(slingCurves(sds)[[2]]$s[slingCurves(sds)[[2]]$ord, ])
 colnames(d2) = c("x","y")
-d3 = data.frame(sds@curves[[3]]$s)
+d3 = data.frame(slingCurves(sds)[[3]]$s[slingCurves(sds)[[3]]$ord, ])
 colnames(d3) = c("x","y")
 
-pl = pl + geom_line(aes(x=x,y=y),data=d1,size=2,alpha=.5) +
-     geom_line(aes(x=x,y=y),data=d2,size=2,alpha=.5) +
-     geom_line(aes(x=x,y=y),data=d3,size=2,alpha=.5) +
+pl = pl + geom_path(aes(x=x,y=y),data=d1,size=2,alpha=.5) +
+     geom_path(aes(x=x,y=y),data=d2,size=2,alpha=.5) +
+     geom_path(aes(x=x,y=y),data=d3,size=2,alpha=.5) +
      xlab("tSNE1") + ylab("tSNE2")
 
-save_plot("../figures/np_pseudotime-lineages.pdf",pl,base_height = 3.71, base_asp=1.618)
+save_plot("../figures/supFig2_np_pseudotime-lineages.pdf",pl,base_height = 3.71, base_asp=1.618)
 
 #=========================
 #- NP marker genes heatmap
@@ -109,39 +119,40 @@ fm = findMarkers( sce,
                   lfc=log2(1.5),            #- this is base2 because log-counts are; so OK
                   full.stats = TRUE)
 
-hmfu <- function(sce, gens, look_cls, nrowsep=5){
+hmfu <- function(sce, gens, look_cls, nrowsep=5, rowfontsize = 8){
 
-  mat = logcounts(sce[gns,sce$cluster_tme %in% look_cls])
-  tcls = droplevels(sce$cluster_tme[sce$cluster_tme %in% look_cls])
-  tcls = forcats::fct_relevel(tcls,look_cls)
-  ncells = 45 #min(table(tcls))
-  inds = tapply(1:ncol(mat),tcls,sample,ncells)
-  inds = (unlist(inds))
-  clus = tcls[inds]
-  mat  = as.matrix(mat[,inds])
+    mat = logcounts(sce[gns,sce$cluster_tme %in% look_cls])
+    rownames(mat) = str_to_title(gsub("_.*$", "", rownames(mat)))
 
-  dd     = mat - rowMeans(mat)
-  dd     = dd / apply(dd,1,sd)
+    tcls = droplevels(sce$cluster_tme[sce$cluster_tme %in% look_cls])
+    tcls = forcats::fct_relevel(tcls,look_cls)
+    ncells = min(table(tcls))
+    inds = tapply(1:ncol(mat),tcls,sample,ncells)
+    inds = (unlist(inds))
+    clus = tcls[inds]
+    mat  = as.matrix(mat[,inds])
+    
+    dd     = mat - rowMeans(mat)
+    dd     = dd / apply(dd,1,sd)
+    
+    source("./utilities_func.R")
+    ord = 1:ncol(mat)
 
-  source("./utilities_func.R")
-  ord = 1:ncol(mat)
-
-  dst = dist((dd))
-  hc  = hclust(dst,method="ward.D2")
-  dend = as.dendrogram(hc)
-  dend = dendextend::seriate_dendrogram( dend,dst)
-
-  colfun = colorRampPalette((diverge_hsv(n = 7)))(100)
-  dd[dd>3] = 3 ; dd[dd < -3] = -3
-
-  rownames(dd) <- sub("_ENSMUSG.*","",rownames(dd))
-
-  hm <- Heatmap(dd[,ord],name="expression",col=colfun,cluster_columns=FALSE,
-  column_labels=rep("",ncol(dd)), cluster_rows=dend, row_split=nrowsep,
-  column_split= clus,use_raster=TRUE,row_names_gp = gpar(fontsize = 8),
-  show_row_dend=FALSE,row_title="", column_title_rot=90)
-
-  return(hm)
+    dst = dist((dd))
+    hc  = hclust(dst,method="ward.D2")
+    dend = as.dendrogram(hc)
+    dend = dendextend::seriate_dendrogram( dend,dst)
+    
+    colfun = colorRampPalette((diverge_hsv(n = 7)))(100)
+    dd[dd>3] = 3 ; dd[dd < -3] = -3
+    
+    
+    hm <- Heatmap(dd[,ord],name="expression",col=colfun,cluster_columns=FALSE,
+                  column_labels=rep("",ncol(dd)), cluster_rows=dend, row_split=nrowsep,
+                  column_split= clus,use_raster=TRUE,row_names_gp = gpar(fontsize = rowfontsize),
+                  show_row_dend=FALSE,row_title="", column_title_rot=90)
+    
+    return(hm)
 }
 
 look_cls = c("differentiating","i_podocyte","m_podocyte","i_proximal_tubular",
@@ -152,7 +163,7 @@ gns = sort(unique(unlist(lapply(tst,rownames))))
 
 hm <- hmfu(sce,gns,look_cls,nrowsep=6)
 
-pdf("../figures/np_celltype-DEG-heatmap.pdf",width=6,height=15) #- FS 3
+pdf("../figures/supFig3_np_celltype-DEG-heatmap.pdf",width=6,height=15) #- FS 3
 draw(hm)
 dev.off()
 
@@ -164,7 +175,7 @@ gns      <- gns[1:100]
 look_cls <- c("i_proximal_tubular","m_proximal_tubular","i_distal_tubular","m_distal_tubular")
 hm       <- hmfu(sce,gns,look_cls,nrowsep=4)
 
-pdf("../figures/np_celltype-tp-vs-td-DEG-heatmap.pdf",width=6,height=12)
+pdf("../figures/supFig4a_np_celltype-tp-vs-td-DEG-heatmap.pdf",width=6,height=12)
 draw(hm)
 dev.off()
 
@@ -174,7 +185,7 @@ dev.off()
 gns <- rownames(fm[["m_distal_tubular"]])[which(fm[["m_distal_tubular"]][,"stats.i_distal_tubular"][,"log.FDR"] < log(0.1))]
 look_cls = c("i_distal_tubular","m_distal_tubular")
 hm <- hmfu(sce,gns,look_cls,nrowsep=2)
-pdf("../figures/np_celltype-mtd-vs-itd-DEG-heatmap.pdf",width=6,height=6)
+pdf("../figures/supFig4b_np_celltype-mtd-vs-itd-DEG-heatmap.pdf",width=6,height=12)
 draw(hm)
 dev.off()
 
@@ -184,7 +195,7 @@ dev.off()
 gns <- rownames(fm[["m_proximal_tubular"]])[which(fm[["m_proximal_tubular"]][,"stats.i_proximal_tubular"][,"log.FDR"] < log(0.1))]
 look_cls = c("i_proximal_tubular","m_proximal_tubular")
 hm <- hmfu(sce,gns,look_cls,nrowsep=2)
-pdf("../figures/np_celltype-mtp-vs-itp-DEG-heatmap.pdf",width=6,height=6)
+pdf("../figures/supFig4c_np_celltype-mtp-vs-itp-DEG-heatmap.pdf",width=6,height=12)
 draw(hm)
 dev.off()
 
@@ -192,10 +203,9 @@ dev.off()
 #==============================
 
 gns <- rownames(fm[["m_podocyte"]])[which(fm[["m_podocyte"]][,"stats.i_podocyte"][,"log.FDR"] < log(0.1))]
-gns <- gns[1:100]
 look_cls = c("i_podocyte","m_podocyte")
 hm <- hmfu(sce,gns,look_cls,nrowsep=2)
-pdf("../figures/np_celltype-mpod-vs-ipod-DEG-heatmap.pdf",width=6,height=12)
+pdf("../figures/supFig4d_np_celltype-mpod-vs-ipod-DEG-heatmap.pdf",width=6,height=12)
 draw(hm)
 dev.off()
 
@@ -256,35 +266,40 @@ p2<- ggplot(dat,aes(x=tSNE1,y=tSNE2,col=birc5)) +
          scale_color_gradient(low="steelblue",high="firebrick")
 
 
- p3 <- ggplot(dat,aes(x=tSNE1,y=tSNE2,col=cluster)) +
-   geom_point(alpha=.8,size=.8) +
-   scale_x_continuous( breaks = c(-20,-10,0,10,20),
+p3 <- ggplot(dat,aes(x=tSNE1,y=tSNE2,col=cluster)) +
+    geom_point(alpha=.8,size=.8) +
+    scale_x_continuous( breaks = c(-20,-10,0,10,20),
                        limits=c(-30,30)) +
-   theme_minimal() +
-   theme( panel.background = element_blank(),
+    theme_minimal() +
+    theme( panel.background = element_blank(),
           panel.border = element_blank(),
           panel.grid.minor = element_blank(),
           panel.grid.major = element_blank(),
           legend.position= "none")+
-   scale_color_manual(values = cls_tmp)
+    scale_color_manual(values = cls_tmp)
 
 
- p4<- ggplot(dat,aes(x=tSNE1,y=tSNE2,col=birc5)) +
-   geom_point(alpha=.8,size=.8) +
-   scale_x_continuous( breaks = c(-20,-10,0,10,20),
+p4 <- ggplot(dat,aes(x=tSNE1,y=tSNE2,col=birc5)) +
+    geom_point(alpha=.8,size=.8) +
+    scale_x_continuous( breaks = c(-20,-10,0,10,20),
                        limits=c(-30,30)) +
-   theme_minimal() +
-   theme( panel.background = element_blank(),
+    theme_minimal() +
+    theme( panel.background = element_blank(),
           panel.border = element_blank(),
           panel.grid.minor = element_blank(),
           panel.grid.major = element_blank(),
           legend.position= "none")+
-          scale_color_gradient(low="steelblue",high="firebrick")
+    scale_color_gradient(low="steelblue",high="firebrick")
 
 
 
-save_plot("../figures/np-ub_tsne-clust.pdf",p1)
-save_plot("../figures/np-ub_tsne-birc5.pdf",p2)
+save_plot("../figures/supFig5a_np-ub_tsne-clust.pdf",p1)
+save_plot("../figures/supFig5b_np-ub_tsne-birc5.pdf",p2)
 
-save_plot("../figures/np-ub_tsne-noleg-clust.pdf",p3)
-save_plot("../figures/np-ub_tsne-noleg-birc5.pdf",p4)
+save_plot("../figures/supFig5a_np-ub_tsne-noleg-clust.pdf",p3)
+save_plot("../figures/supFig5b_np-ub_tsne-noleg-birc5.pdf",p4)
+
+#- end
+
+
+

@@ -38,11 +38,11 @@ cl[cl == "4"] = "tubular_prox"
 cl[cl == "5"] = "tubular_dist"
 cl[cl == "6"] = "self-renew"
 sce$Cluster2 = factor(cl, levels = c("self-renew",
-                                      "primed",
-                                      "differentiating",
-                                      "tubular_prox",
-                                      "tubular_dist",
-                                      "podocytes"))
+                                     "primed",
+                                     "differentiating",
+                                     "tubular_prox",
+                                     "tubular_dist",
+                                     "podocytes"))
 
 #- Cluster2 colors are still needed
 cl   = metadata(sce)$Cluster_colors
@@ -149,7 +149,7 @@ cl                                      = as.factor(cl)
 
 #- smooth via time
 #-----------------
-#- minimum podocyte time for i_potodyctes (and m_podocytes)
+#- minimum podocyte time for i_podocytes (and m_podocytes)
 tmp      = mke_tme_clus_prob(t1,cl,nms=colData(sce)$cell)
 tmin.ind = min(which(colnames(tmp$prd)[1:7][apply(tmp$prd[order(t1),][,1:7],1,which.max)] == "i_podocytes"))
 tmin     = sort(t1)[tmin.ind]

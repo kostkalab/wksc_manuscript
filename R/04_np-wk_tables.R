@@ -2,7 +2,7 @@ library(scater)
 library(scran)
 library(openxlsx)
 library(colorspace)
-
+library(stringr)
 
 #===================================
 #- UNEXPECTED GENE EXPRESSION TABLES
@@ -33,7 +33,7 @@ fet_fu <- function(g1, g2, mat, subset = NULL, thresh = 0) {
 
 gens.1 <- sort(c("col1a1","meis1"))
 gens.2 <- sort(c("six2","cited1","crym","gdnf"))
-cluss  <- sort(c("cortical_stroma","mesangial_stroma","medullary_stroma")
+cluss  <- sort(c("cortical_stroma","mesangial_stroma","medullary_stroma"))
 
 clus <- cluss[1]
 
@@ -62,11 +62,13 @@ for(cl in 1:length(cluss)){
   }
 }
 RES = RES[RES$cluster == "cortical_stroma",]
-saveRDS(restab,"../results/xl_np-stroma_coexpression.rds")
+RES$gene1 = str_to_title(RES$gene1)
+RES$gene2 = str_to_title(RES$gene2)
+saveRDS(RES,"../results/xl_np-stroma_coexpression.rds")
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=RES, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/xl_np-stroma_coexpression.xlsx')
+saveWorkbook(wb,'../results/tab1_xl_np-stroma_coexpression.xlsx')
 
 #- TABLE 2
 #---------
@@ -77,11 +79,13 @@ r2   <- round(r1,3)*100
 
 tab  <- r2[c("i_proximal_tubular", "m_proximal_tubular", "i_distal_tubular",
              "m_distal_tubular", "ureteric_bud/collecting_duct"),]
- saveRDS(tab,"../results/xl_tub-ub_expression.rds")
- wb <- createWorkbook()
- addWorksheet(wb = wb, sheetName = "Sheet1")
- writeData(wb=wb,x=RES, sheet="Sheet1",rowNames=FALSE)
- saveWorkbook(wb,'../results/xl_tub-ub_expression.xlsx')
+colnames(tab) = str_to_title(colnames(tab))
+saveRDS(tab,"../results/xl_tub-ub_expression.rds")
+tab = cbind(rownames(tab), tab)
+wb <- createWorkbook()
+addWorksheet(wb = wb, sheetName = "Sheet1")
+writeData(wb=wb,x=tab, sheet="Sheet1",rowNames=FALSE)
+saveWorkbook(wb,'../results/tab2_xl_tub-ub_expression.xlsx')
 
 #============================
 #- DEGs between WK cell-types
@@ -114,7 +118,7 @@ for(i in 1:length(restab)){
   sname = names(restab)[i]
   message(sname)
   df    = as(restab[[i]],"data.frame")
-  df$gene = rownames(df)
+  df$gene = str_to_title(rownames(df))
   addWorksheet(wb = wb, sheetName = sname)
   writeData(wb=wb,sheet=sname,x=df,rowNames=FALSE)
   conditionalFormatting(wb, sname, cols=3:(ncol(df)-2), rows=1:(nrow(df)+1),
@@ -122,7 +126,7 @@ for(i in 1:length(restab)){
           rule = c(-2,0,2),
           type = "colourScale")
 }
-saveWorkbook(wb,'../results/wk_celltype-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab1_wk_celltype-DEG.xlsx')
 
 #============================
 #- DEGs between NP cell-types
@@ -155,7 +159,7 @@ for(i in 1:length(restab)){
   sname = names(restab)[i]
   message(sname)
   df    = as(restab[[i]],"data.frame")
-  df$gene = rownames(df)
+  df$gene = str_to_title(rownames(df))
   addWorksheet(wb = wb, sheetName = sname)
   writeData(wb=wb,sheet=sname,x=df,rowNames=FALSE)
   conditionalFormatting(wb, sname, cols=3:(ncol(df)-2), rows=1:(nrow(df)+1),
@@ -163,7 +167,7 @@ for(i in 1:length(restab)){
           rule = c(-2,0,2),
           type = "colourScale")
 }
-saveWorkbook(wb,'../results/np_celltype-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab2_np_celltype-DEG.xlsx')
 
 #=================================
 #- MATURE vs. IMMATURE comparisons
@@ -199,13 +203,14 @@ dat$cluster_1 <- "m_proximal_tubular"
 dat$cluster_2 <- "i_proximal_tubular"
 DAT           <- rbind(DAT,dat)
 
+rownames(DAT) = str_to_title(rownames(DAT))
 saveRDS(DAT,"../results/np_celltype-mature-vs-immature-DEG.rds")
 
 DAT$gene = rownames(DAT)
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=DAT, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_celltype-mature-vs-immatrue-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab9_np_celltype-mature-vs-immatrue-DEG.xlsx')
 
 
 DAT           <- NULL
@@ -214,10 +219,15 @@ dat           <- fm[["m_proximal_tubular"]][,"stats.m_distal_tubular"][ind,]
 dat$cluster_1 <- "m_proximal_tubular"
 dat$cluster_2 <- "m_distal_tubular"
 DAT           <- rbind(DAT,dat)
+rownames(DAT) = str_to_title(rownames(DAT))
 
 
 DAT$gene = rownames(DAT)
 wb <- createWorkbook()
 addWorksheet(wb = wb, sheetName = "Sheet1")
 writeData(wb=wb,x=DAT, sheet="Sheet1",rowNames=FALSE)
-saveWorkbook(wb,'../results/np_celltype-tub-dist-vs-prox-DEG.xlsx')
+saveWorkbook(wb,'../results/supTab10_np_celltype-tub-dist-vs-prox-DEG.xlsx')
+
+
+
+#- end
