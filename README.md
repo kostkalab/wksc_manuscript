@@ -1,13 +1,13 @@
 
 
-###Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis
+### Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis
 
 <p align=center>
 Abha S. Bais, Débora M. Cerqueira, Andrew  Clugston, Andrew J. Bodnar,
 Jacqueline Ho and Dennis Kostka
 </p>
 
-This repository contains code and instruction to reproduce analyses carried out in the context of the manuscript ***Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis***. Pleas follow [this link](TBD) to access the manuscript on bioRxiv. Data generated is available on the Gene Expression Omnibus (GEO) under [https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?&acc=GSE158166](GSE158166).
+This repository contains code and instruction to reproduce analyses carried out in the context of the manuscript ***Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis***. Pleas follow [this link](https://doi.org/10.1101/2020.09.16.300293) to access the manuscript on bioRxiv. Data generated is available on the Gene Expression Omnibus (GEO) under [GSE158166](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?&acc=GSE158166).
 
 The overall directory structure is the following:
 ```
@@ -264,5 +264,3 @@ $ cd ..
 - ./results/suppTab12_np_self-vs-primed-DEG_CCRmPhaseGenes_lfc1.2.xlsx #- Supplemental Table 12
 - ./results/supTab13_birc5CorGenes_dist_tub_ub.xlsx                    #- Supplemetal Table 13
 ```
-
-pdf("../figures/supFig6a_magella-comp.pdf", width = 8, height = 8)
