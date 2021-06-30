@@ -7,7 +7,7 @@ Abha S. Bais, Débora M. Cerqueira, Andrew  Clugston, Andrew J. Bodnar,
 Jacqueline Ho and Dennis Kostka
 </p>
 
-This repository contains code and instruction to reproduce analyses carried out in the context of the manuscript ***Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis***. Pleas follow [this link](TBD) to access the manuscript on bioRxiv. Data generated is available on the Gene Expression Omnibus (GEO) under [TBD](TBD).
+This repository contains code and instruction to reproduce analyses carried out in the context of the manuscript ***Single cell RNA sequencing reveals differential cell cycle activity in key cell populations during nephrogenesis***. Pleas follow [this link](TBD) to access the manuscript on bioRxiv. Data generated is available on the Gene Expression Omnibus (GEO) under [https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?&acc=GSE158166](GSE158166).
 
 The overall directory structure is the following:
 ```
